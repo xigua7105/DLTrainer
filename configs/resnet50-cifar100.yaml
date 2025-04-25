@@ -1,0 +1,71 @@
+model:
+  name: ResNet-50
+  task: CLS
+  struct:
+    name: ResNet
+    num_classes: 100
+    block_name: Bottleneck
+    layers:
+      - 3
+      - 4
+      - 6
+      - 3
+
+data:
+  dir: cifar
+  dataset_type: CIFAR100
+  is_multi_loader: false
+  train_transforms:
+    name: cifar100_train_trans
+    kwargs:
+  train_target_transforms:
+  test_transforms:
+    name: cifar100_test_trans
+    kwargs:
+  test_target_transforms:
+
+optim:
+  optimizer:
+    name: SGD
+    lr: 0.1
+    momentum: 0.9
+    weight_decay: 0.0005
+
+  scheduler:
+    name: MultiStepLR
+    milestones:
+      - 60
+      - 120
+      - 160
+    gamma: 0.2
+
+loss:
+  loss_terms:
+    name: CrossEntropyLoss
+
+trainer:
+  name: CLSTrainer
+  ckpt_dir: checkpoints
+  resume_dir:
+  batch_size: 512
+  batch_size_per_gpu:
+  batch_size_test: 512
+  batch_size_per_gpu_test:
+  num_workers_per_gpu: 8
+  drop_last: ture
+  pin_memory: ture
+  scaler: native
+  save_freq: 10
+  sync_bn: false
+  dist_bn:
+  amp: true
+
+logger:
+  dir: logs
+  log_freq: 100
+  logger_rank: 0
+
+seed: 42
+total_epochs: 200
+warmup_epochs: 1
+test_start_epoch: 60
