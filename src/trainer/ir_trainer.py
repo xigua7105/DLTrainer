@@ -1,6 +1,7 @@
 import os
 import torch
 import numpy as np
+import torchvision
 from util.tools import get_timepc, trans_state_dict
 from util.metric import get_psnr, get_ssim
 from .basic_trainer import BasicTrainer
@@ -29,12 +30,18 @@ class IRTrainer(BasicTrainer):
         for k, v in self.test_loader.items():
             psnr, ssim = 0.0, 0.0
             _t_s = get_timepc()
-            for batch_data in v:
+            for idx, batch_data in enumerate(v):
                 self.set_input(batch_data)
                 self.forward()
 
                 psnr += get_psnr(self.output, self.target)
                 ssim += get_ssim(self.output, self.target)
+
+                # inputs = self.input * 0.5 + 0.5
+                # targets = self.target * 0.5 + 0.5
+                # outputs = self.output * 0.5 + 0.5
+                # cat_images = torch.cat((inputs, targets, outputs))
+                # torchvision.utils.save_image(cat_images, f"visual/{k}_{idx}.png", nrow=self.cfg.trainer.batch_size_test)
 
             psnr = psnr / len(v)
             ssim = ssim / len(v)
@@ -76,15 +83,15 @@ class IRTrainer(BasicTrainer):
                 save_path = os.path.join(str(dir_name), base_name)
                 torch.save(ckpt_infos, save_path)
                 self.logger.log_msg("checkpoint saved to {}".format(save_path)) if self.master else None
-            if self.best_psnr:
+            if self.is_best_psnr:
                 base_name = "best_psnr_ckpt.pth"
                 save_path = os.path.join(str(dir_name), base_name)
                 torch.save(ckpt_infos, save_path)
-                self.is_best = False
+                self.is_best_psnr = False
                 self.logger.log_msg("checkpoint saved to {}".format(save_path)) if self.master else None
-            if self.best_ssim:
+            if self.is_best_ssim:
                 base_name = "best_ssim_ckpt.pth"
                 save_path = os.path.join(str(dir_name), base_name)
                 torch.save(ckpt_infos, save_path)
-                self.is_best = False
+                self.is_best_ssim = False
                 self.logger.log_msg("checkpoint saved to {}".format(save_path)) if self.master else None
